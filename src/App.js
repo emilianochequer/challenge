@@ -24,10 +24,54 @@ const filters = (filterType) => {
   };
 };
 
+const sort = (sortType) => {
+  console.log(sortType);
+  return (a, b) => {
+    switch (sortType) {
+      case 'ID':
+        if (a.id < b.id) {
+          return -1;
+        }
+        if (a.id > b.id) {
+          return 1;
+        }
+        return 0;
+      case 'NAME':
+        if (a.name < b.name) {
+          return -1;
+        }
+        if (a.name > b.name) {
+          return 1;
+        }
+        return 0;
+      case 'PAYMENT_STATUS':
+        if (a.paymentStatus < b.paymentStatus) {
+          return -1;
+        }
+        if (a.paymentStatus > b.paymentStatus) {
+          return 1;
+        }
+        return 0;
+      case 'DATE':
+        if (a.date < b.date) {
+          return 1;
+      }
+      if (a.date > b.date) {
+          return -1;
+      }
+      return 0;
+      default:
+        return a;
+    }
+  };
+};
+
 function App() {
   const [tenants, setTenants] = useState([]);
   const [typeFilter, setTypeFilter] = useState('ALL');
+  const [typeSort, setTypeSort] = useState('ID');
   const filterFunction = filters(typeFilter);
+  const sortFunction = sort(typeSort);
 
   useEffect(() => {
     Service.getTenants().then((data) => {
@@ -43,7 +87,7 @@ function App() {
           <li className="nav-item">
             <a
               onClick={() => setTypeFilter('ALL')}
-              className="nav-link active"
+              className={`nav-link ${typeFilter === 'ALL' && 'active'}`}
               href="#"
             >
               All
@@ -52,7 +96,7 @@ function App() {
           <li className="nav-item">
             <a
               onClick={() => setTypeFilter('LATE')}
-              className="nav-link"
+              className={`nav-link ${typeFilter === 'LATE' && 'active'}`}
               href="#"
             >
               Payment is late
@@ -61,7 +105,7 @@ function App() {
           <li className="nav-item">
             <a
               onClick={() => setTypeFilter('DATE')}
-              className="nav-link"
+              className={`nav-link ${typeFilter === 'DATE' && 'active'}`}
               href="#"
             >
               Lease ends in less than a month
@@ -71,25 +115,30 @@ function App() {
         <table className="table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Payment Status</th>
-              <th>Lease End Date</th>
+              <th onClick={() => setTypeSort('ID')}>#</th>
+              <th onClick={() => setTypeSort('NAME')}>Name</th>
+              <th onClick={() => setTypeSort('PAYMENT_STATUS')}>
+                Payment Status
+              </th>
+              <th onClick={() => setTypeSort('DATE')}>Lease End Date</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {tenants?.filter(filterFunction).map((tenant, i) => (
-              <tr key={i}>
-                <th>{tenant.id}</th>
-                <td>{tenant.name}</td>
-                <td>{tenant.paymentStatus}</td>
-                <td>{moment(tenant.leaseEndDate).format('DD/MM/YYYY')}</td>
-                <td>
-                  <button className="btn btn-danger">Delete</button>
-                </td>
-              </tr>
-            ))}
+            {tenants
+              ?.filter(filterFunction)
+              ?.sort((a, b) => sortFunction(a, b))
+              .map((tenant, i) => (
+                <tr key={i}>
+                  <th>{tenant.id}</th>
+                  <td>{tenant.name}</td>
+                  <td>{tenant.paymentStatus}</td>
+                  <td>{moment(tenant.leaseEndDate).format('DD/MM/YYYY')}</td>
+                  <td>
+                    <button className="btn btn-danger">Delete</button>
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       </div>
