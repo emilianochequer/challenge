@@ -55,11 +55,11 @@ const sort = (sortType) => {
       case 'DATE':
         if (a.date < b.date) {
           return 1;
-      }
-      if (a.date > b.date) {
+        }
+        if (a.date > b.date) {
           return -1;
-      }
-      return 0;
+        }
+        return 0;
       default:
         return a;
     }
@@ -70,6 +70,14 @@ function App() {
   const [tenants, setTenants] = useState([]);
   const [typeFilter, setTypeFilter] = useState('ALL');
   const [typeSort, setTypeSort] = useState('ID');
+  const [showForm, setShowForm] = useState(false);
+  const [formError, setErrors] = useState('');
+  const [input, setInput] = useState({
+    name: '',
+    leaseEndDate: '',
+    paymentStatus: '',
+  });
+
   const filterFunction = filters(typeFilter);
   const sortFunction = sort(typeSort);
 
@@ -78,6 +86,25 @@ function App() {
       setTenants(data);
     });
   }, [tenants]);
+
+  const handleInputChange = (e) => {
+    setInput({
+      ...input,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const saveTenant = (e) => {
+    e.preventDefault();
+    if (input.name.length >= 25 || input.leaseEndDate > new Date()) {
+      setErrors('have errors');
+    } else {
+      if (!input.paymentStatus) {
+        input.paymentStatus = 'CURRENT';
+      }
+      Service.addTenant(input);
+    }
+  };
 
   return (
     <>
@@ -135,7 +162,12 @@ function App() {
                   <td>{tenant.paymentStatus}</td>
                   <td>{moment(tenant.leaseEndDate).format('DD/MM/YYYY')}</td>
                   <td>
-                    <button className="btn btn-danger">Delete</button>
+                    <button
+                      onClick={() => Service.deleteTenant(tenant.id)}
+                      className="btn btn-danger"
+                    >
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -143,29 +175,52 @@ function App() {
         </table>
       </div>
       <div className="container">
-        <button className="btn btn-secondary">Add Tenant</button>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="btn btn-secondary"
+        >
+          Add Tenant
+        </button>
       </div>
-      <div className="container">
-        <form>
-          <div className="form-group">
-            <label>Name</label>
-            <input className="form-control" />
-          </div>
-          <div className="form-group">
-            <label>Payment Status</label>
-            <select className="form-control">
-              <option>CURRENT</option>
-              <option>LATE</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Lease End Date</label>
-            <input className="form-control" />
-          </div>
-          <button className="btn btn-primary">Save</button>
-          <button className="btn">Cancel</button>
-        </form>
-      </div>
+      {showForm && (
+        <div className="container">
+          <form onSubmit={saveTenant}>
+            <div className="form-group">
+              <label>Name</label>
+              <input
+                value={input.name}
+                name="name"
+                onChange={handleInputChange}
+                className="form-control"
+              />
+            </div>
+            <div className="form-group">
+              <label>Payment Status</label>
+              <select
+                name="paymentStatus"
+                onChange={handleInputChange}
+                className="form-control"
+              >
+                <option value="CURRENT">CURRENT</option>
+                <option value="LATE">LATE</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Lease End Date</label>
+              <input
+                name="leaseEndDate"
+                type="date"
+                onChange={handleInputChange}
+                className="form-control"
+              />
+            </div>
+            <button type="submit" className="btn btn-primary">
+              Save
+            </button>
+            <button className="btn">Cancel</button>
+          </form>
+        </div>
+      )}
     </>
   );
 }
